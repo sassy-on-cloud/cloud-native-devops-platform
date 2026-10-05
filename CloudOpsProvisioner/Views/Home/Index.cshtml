@@ -1,0 +1,157 @@
+@{
+    ViewData["Title"] = "CloudOps Provisioner";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="/css/site.css" />
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="brand">
+            CloudOps Provisioner
+        </div>
+
+        <div class="status">
+            <span class="status-dot"></span>
+            Platform Online
+        </div>
+    </header>
+
+    <main class="container">
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="success-message">
+        @TempData["SuccessMessage"]
+    </div>
+}
+        <section class="hero">
+            <div>
+                <p class="eyebrow">CLOUD-NATIVE DEVOPS PLATFORM</p>
+
+                <h1>Provision cloud environments with confidence.</h1>
+
+                <p class="description">
+                    Create isolated AWS environments through infrastructure-as-code,
+                    automated CI/CD pipelines, and Kubernetes-ready deployments.
+                </p>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+
+            <div class="card">
+                <h2>Provision Environment</h2>
+
+                <p>
+                    Configure an environment that will eventually be provisioned
+                    automatically using Terraform and GitHub Actions.
+                </p>
+
+                <form asp-controller="Home" asp-action="Provision" method="post">
+                    <label for="environment">Environment</label>
+                    <select id="environment" name="Environment">
+                        <option>Development</option>
+                        <option>Staging</option>
+                        <option>Production</option>
+                    </select>
+
+                    <label for="region">AWS Region</label>
+                    <select id="region" name="AwsRegion">
+                        <option>ap-south-1</option>
+                        <option>us-east-1</option>
+                        <option>eu-west-1</option>
+                    </select>
+
+                    <label for="deployment">Deployment Platform</label>
+                    <select id="deployment" name="DeploymentPlatform">
+                        <option>ECS Fargate</option>
+                        <option>Amazon EKS</option>
+                    </select>
+
+                    <button type="submit">
+                        Request Provisioning
+                    </button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Platform Status</h2>
+
+                <div class="metric">
+                    <span>Infrastructure</span>
+                    <strong>Ready</strong>
+                </div>
+
+                <div class="metric">
+                    <span>CI/CD</span>
+                    <strong>Planned</strong>
+                </div>
+
+                <div class="metric">
+                    <span>Container Platform</span>
+                    <strong>Docker</strong>
+                </div>
+
+                <div class="metric">
+                    <span>Orchestration</span>
+                    <strong>Kubernetes</strong>
+                </div>
+
+                <div class="metric">
+                    <span>Observability</span>
+                    <strong>Prometheus + Grafana</strong>
+                </div>
+            </div>
+
+        </section>
+<section class="requests-section">
+
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">ENVIRONMENT ACTIVITY</p>
+            <h2>Recent Provisioning Requests</h2>
+        </div>
+    </div>
+
+    @if (ViewBag.Requests.Count == 0)
+    {
+        <div class="empty-state">
+            No provisioning requests yet.
+        </div>
+    }
+    else
+    {
+        <div class="requests-table">
+
+            <div class="request-row request-header">
+                <span>Environment</span>
+                <span>AWS Region</span>
+                <span>Platform</span>
+                <span>Status</span>
+            </div>
+
+            @foreach (var request in ViewBag.Requests)
+            {
+                <div class="request-row">
+                    <span>@request.Environment</span>
+                    <span>@request.AwsRegion</span>
+                    <span>@request.DeploymentPlatform</span>
+                    <span class="status-badge">Requested</span>
+                </div>
+            }
+
+        </div>
+    }
+
+</section>
+
+    </main>
+</body>
+</html>

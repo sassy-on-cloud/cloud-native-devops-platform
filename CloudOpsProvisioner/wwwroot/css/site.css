@@ -1,0 +1,261 @@
+:root {
+    --bg: #f4f2ec;
+    --surface: #fbfaf7;
+    --ink: #1f1d1a;
+    --muted: #6d6a63;
+    --line: #d9d5ca;
+    --accent: #b4441f;
+    --ok: #3f7d4e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    background: var(--bg);
+    color: var(--ink);
+}
+
+.navbar {
+    padding: 14px 6%;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--ink);
+}
+
+.brand {
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+}
+
+.container {
+    width: 88%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.hero {
+    padding: 40px 0 28px;
+}
+
+.eyebrow {
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+h1 {
+    max-width: 640px;
+    margin: 6px 0 10px;
+    font-size: 34px;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.description {
+    max-width: 560px;
+    margin: 0;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    padding-bottom: 48px;
+    align-items: start;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 22px 24px;
+}
+
+.card h2 {
+    margin: 0 0 6px;
+    font-size: 18px;
+}
+
+.card p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+form {
+    margin-top: 18px;
+}
+
+label {
+    display: block;
+    margin: 14px 0 5px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    font: inherit;
+    color: var(--ink);
+}
+
+select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 9px 20px;
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    background: var(--ink);
+    color: var(--surface);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 0;
+    border-bottom: 1px dashed var(--line);
+}
+
+.metric:last-child {
+    border-bottom: none;
+}
+
+.metric span {
+    color: var(--muted);
+}
+
+.metric strong {
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 800px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    .container {
+        width: 92%;
+    }
+}
+.success-message {
+    margin-top: 30px;
+    padding: 15px 18px;
+    border: 1px solid #b7dfc8;
+    border-radius: 8px;
+    background: #edf9f1;
+    color: #216e3a;
+    font-size: 15px;
+    font-weight: 600;
+}
+.requests-section {
+    margin-bottom: 70px;
+}
+
+.section-heading {
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    margin-top: 5px;
+}
+
+.requests-table {
+    background: #ffffff;
+    border: 1px solid #e2e7ed;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.request-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr 0.8fr;
+    gap: 20px;
+    padding: 17px 22px;
+    border-bottom: 1px solid #edf0f3;
+    align-items: center;
+}
+
+.request-row:last-child {
+    border-bottom: none;
+}
+
+.request-header {
+    background: #f8f9fb;
+    font-size: 13px;
+    font-weight: 700;
+    color: #657184;
+}
+
+.status-badge {
+    display: inline-block;
+    width: fit-content;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: #fff4d6;
+    color: #8a6400;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.empty-state {
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e2e7ed;
+    border-radius: 12px;
+    color: #657184;
+}
+
+@media (max-width: 800px) {
+    .request-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .request-header {
+        display: none;
+    }
+}
