@@ -181,3 +181,84 @@ resource "aws_ecs_cluster" "main" {
     Environment = var.environment
   }
 }
+
+resource "aws_ecs_task_definition" "app" {
+  family                   = "${var.project_name}-task"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+
+  execution_role_arn = "arn:aws:iam::531979738742:role/cloud-native-devops-platform-ecs-execution-role"
+
+  container_definitions = jsonencode([
+    {
+      name      = "cloudops-provisioner"
+      image     = "${aws_ecr_repository.app.repository_url}:latest"
+      essential = true
+
+      portMappings = [
+        {
+          containerPort = 8080
+          hostPort      = 8080
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+
+        options = {
+          awslogs-group         = "/ecs/${var.project_name}"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    }
+  ])
+
+  tags = {
+    Name        = "${var.project_name}-task"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_cloudwatch_log_group" "ecs" {
+  name              = "/ecs/${var.project_name}"
+  retention_in_days = 7
+
+  tags = {
+    Name        = "${var.project_name}-ecs-logs"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_security_group" "ecs" {
+  name        = "${var.project_name}-ecs-sg"
+  description = "Security group for ECS Fargate tasks"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = "Allow application traffic from the ALB"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    description = "Allow outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.project_name}-ecs-sg"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
