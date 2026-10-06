@@ -137,3 +137,20 @@ resource "aws_lb_target_group" "app" {
     Environment = var.environment
   }
 }
+
+resource "aws_lb" "app" {
+  name               = "${var.project_name}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets = [
+    aws_subnet.public.id,
+    aws_subnet.public_b.id
+  ]
+
+  tags = {
+    Name        = "${var.project_name}-alb"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
