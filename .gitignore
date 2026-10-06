@@ -26,3 +26,12 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
