@@ -52,3 +52,18 @@ resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
 }
+
+resource "aws_ecr_repository" "app" {
+  name                 = "${var.project_name}-app"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-ecr"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
