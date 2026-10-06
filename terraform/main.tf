@@ -171,3 +171,13 @@ resource "aws_lb_listener" "http" {
     Environment = var.environment
   }
 }
+
+resource "aws_ecs_cluster" "main" {
+  name = "${var.project_name}-cluster"
+
+  tags = {
+    Name        = "${var.project_name}-cluster"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
