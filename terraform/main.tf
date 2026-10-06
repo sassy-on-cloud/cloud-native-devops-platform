@@ -262,3 +262,41 @@ resource "aws_security_group" "ecs" {
     Environment = var.environment
   }
 }
+
+resource "aws_ecs_service" "app" {
+  name            = "${var.project_name}-service"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets = [
+      aws_subnet.public.id,
+      aws_subnet.public_b.id
+    ]
+
+    security_groups = [
+      aws_security_group.ecs.id
+    ]
+
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "cloudops-provisioner"
+    container_port   = 8080
+  }
+
+  depends_on = [
+    aws_lb_listener.http,
+    aws_ecs_task_definition.app
+  ]
+
+  tags = {
+    Name        = "${var.project_name}-service"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
