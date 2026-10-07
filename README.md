@@ -56,6 +56,7 @@ Docker Build        Amazon ECR
       CloudOps Provisioner
 ```
 ## Application
+
 The current application is CloudOps Provisioner, an ASP.NET Core MVC application that provides a simple interface for submitting infrastructure provisioning requests.
 Current Functionality
 - Provisioning request form
@@ -75,7 +76,8 @@ Current Functionality
 
 ## AWS Infrastructure
 The AWS infrastructure is provisioned using Terraform.
-Current Resources
+
+## Current Resources
 - Custom VPC: 10.20.0.0/16
 - Two public subnets across two Availability Zones
 - Internet Gateway
@@ -90,9 +92,13 @@ Current Resources
 - CloudWatch log group
 
 The current Fargate deployment uses public subnets with public IP assignment to avoid introducing a NAT Gateway and its additional cost during the learning project.
-Infrastructure as Code
+
+## Infrastructure as Code
+
 Terraform manages the AWS infrastructure so that the environment can be reproduced consistently rather than created manually through the AWS Console.
+
 Terraform is currently responsible for:
+
 - Networking
 - Amazon ECR
 - Load balancing
@@ -100,10 +106,16 @@ Terraform is currently responsible for:
 - Security groups
 - CloudWatch logging
 - Resource naming and tagging
-CI/CD Pipeline
+
+## CI/CD Pipeline
+
 The project includes an automated GitHub Actions deployment pipeline.
+
 A push to the main branch triggers the deployment workflow.
-Pipeline Flow
+
+## Pipeline Flow
+
+```text
 Git Push
    |
    v
@@ -133,16 +145,22 @@ ALB Health Check
    |
    v
 Running Application
+```
 
-Secure AWS Authentication
+## Secure AWS Authentication
+
 The workflow does not store long-lived AWS access keys in GitHub.
+
 Instead, GitHub Actions uses OpenID Connect (OIDC) to assume a dedicated AWS IAM role.
+
 The IAM trust relationship is restricted to:
+
 - This GitHub repository
 - The main branch
 - GitHub's OIDC provider
 The deployment role follows a least-privilege approach, granting only the AWS permissions required by the deployment pipeline.
-CI/CD Deployment Process
+
+## CI/CD Deployment Process
 The deployment pipeline performs the following steps:
 1. Checks out the application source code.
 2. Authenticates to AWS using GitHub Actions OIDC.
@@ -156,9 +174,11 @@ The deployment pipeline performs the following steps:
 10. Deploys the revision to the ECS Fargate service.
 11. Waits for ECS service stability.
 12. Verifies that the application is healthy behind the Application Load Balancer.
-Deployment Verification
+
+## Deployment Verification
 The first automated deployment successfully completed through GitHub Actions.
-Verified Results
+
+## Verified Results
 - GitHub Actions deployment: successful
 - AWS OIDC authentication: successful
 - Docker image pushed to ECR: successful
@@ -169,21 +189,31 @@ Verified Results
 - ALB target health: healthy
 - Public application response: HTTP 200
 This demonstrates an end-to-end automated deployment from a Git commit to a healthy ECS workload.
-CI/CD Troubleshooting
+
+## CI/CD Troubleshooting
 During implementation, the deployment pipeline encountered and resolved several real-world AWS and GitHub Actions integration issues.
-OIDC Trust Policy
+
+## OIDC Trust Policy
 The initial GitHub Actions authentication failed because the repository used GitHub's immutable OIDC subject format for newer repositories.
+
 The IAM trust policy was updated to use the repository and immutable repository/owner identifiers, after which OIDC authentication succeeded.
-ECR Permissions
+
+## ECR Permissions
 The pipeline initially lacked permission to describe the ECR repository.
+
 The deployment role was updated with the required ecr:DescribeRepositories permission.
-ECS Permissions
+
+## ECS Permissions
 The pipeline also encountered an ECS permission issue when retrieving the task definition.
+
 The IAM policy was refined by separating ECS read permissions from the service update permission.
+
 These troubleshooting steps demonstrated practical IAM debugging and least-privilege policy design rather than relying on broad administrator permissions.
-Security
+
+## Security
 Security is being incorporated throughout the project rather than added only at the end.
-Current Security Practices
+
+## Current Security Practices
 - GitHub Actions OIDC authentication
 - No long-lived AWS credentials stored in GitHub
 - Dedicated IAM role for CI/CD
@@ -193,16 +223,19 @@ Current Security Practices
 - ECR image scanning on push
 - Sensitive files excluded through .gitignore
 Future security improvements will include AWS WAF and additional application-level security controls.
-Evidence
+
+## Evidence
 Project screenshots are stored in the screenshots directory.
-Application and Docker
+
+## Application and Docker
 - [Application running](./screenshots/02-application-running.png)
 - [CloudOps dashboard](./screenshots/03-cloudops-dashboard.png)
 - [Provisioning request](./screenshots/04-provisioning-request.png)
 - [Unit tests passing](./screenshots/06-unit-tests-passing.png)
 - [Docker image built](./screenshots/07-docker-image-built.png)
 - [Containerized application](./screenshots/08-containerized-app.png)
-Terraform and AWS Infrastructure
+
+## Terraform and AWS Infrastructure
 - [Terraform VPC](./screenshots/09-terraform-vpc-created.png)
 - [Terraform ECR](./screenshots/10-terraform-ecr-created.png)
 - [Two-AZ network](./screenshots/11-terraform-two-az-network.png)
@@ -213,12 +246,15 @@ Terraform and AWS Infrastructure
 - [ECS cluster](./screenshots/16-terraform-ecs-cluster.png)
 - [ECS security group](./screenshots/17-ecs-security-group.png)
 - [ECS Fargate application](./screenshots/18-ecs-fargate-application-running.png)
-CI/CD
+
+## CI/CD
 - [GitHub Actions deployment success](./screenshots/19-github-actions-deployment-success.png)
 - [Application deployed through CI/CD](./screenshots/20-cicd-deployed-application.png)
-Project Roadmap
+
+## Project Roadmap
 The project is being developed in stages.
-Completed
+
+## Completed
 - [x] ASP.NET Core application
 - [x] Automated unit testing
 - [x] Docker containerization
@@ -230,7 +266,8 @@ Completed
 - [x] GitHub Actions OIDC authentication
 - [x] Least-privilege deployment IAM
 - [x] Deployment health verification
-Planned
+
+## Planned
 - [ ] Environment-aware deployments
 - [ ] Improved application security
 - [ ] AWS WAF
@@ -240,26 +277,27 @@ Planned
 - [ ] Application and infrastructure observability
 - [ ] ECS vs EKS comparison
 - [ ] Final production-style cloud-native architecture
-Technology Stack
-Category	Technologies
-Application	ASP.NET Core MVC, .NET 10, C#
-Containerization	Docker
-Source Control	Git, GitHub
-CI/CD	GitHub Actions
-Cloud	AWS
-Infrastructure as Code	Terraform
-Container Registry	Amazon ECR
-Container Platform	Amazon ECS Fargate
-Load Balancing	Application Load Balancer
-Networking	Amazon VPC, Subnets, Internet Gateway, Route Tables
-Security	AWS IAM, Security Groups, GitHub OIDC
-Logging	Amazon CloudWatch
-Planned Monitoring	Prometheus, Grafana
-Planned Security	AWS WAF
-Planned Orchestration	Amazon EKS
 
+## Technology Stack
+| Category | Technologies |
+|---|---|
+| Application | ASP.NET Core MVC, .NET 10, C# |
+| Containerization | Docker |
+| Source Control | Git, GitHub |
+| CI/CD | GitHub Actions |
+| Cloud | AWS |
+| Infrastructure as Code | Terraform |
+| Container Registry | Amazon ECR |
+| Container Platform | Amazon ECS Fargate |
+| Load Balancing | Application Load Balancer |
+| Networking | Amazon VPC, Subnets, Internet Gateway, Route Tables |
+| Security | AWS IAM, Security Groups, GitHub OIDC |
+| Logging | Amazon CloudWatch |
+| Planned Monitoring | Prometheus, Grafana |
+| Planned Security | AWS WAF |
+| Planned Orchestration | Amazon EKS |
 
-What This Project Demonstrates
+## What This Project Demonstrates
 This project is intended as a practical demonstration of:
 - AWS cloud infrastructure
 - Terraform / Infrastructure as Code
@@ -276,13 +314,20 @@ This project is intended as a practical demonstration of:
 - Security-aware infrastructure design
 - Monitoring and observability concepts
 The implementation is intentionally incremental so that each stage can be built, tested, documented, and verified before moving to the next architectural capability.
-Project Status
-Current stage: CI/CD with AWS ECS Fargate
+
+## Project Status
+## Current stage: CI/CD with AWS ECS Fargate
+
 The application is currently deployed to AWS ECS Fargate behind an Application Load Balancer, with GitHub Actions handling automated image builds and deployments.
+
 The next stages will extend the platform with stronger security, environment-aware deployments, Kubernetes, and monitoring to create a more complete cloud-native DevOps platform.
-Learning Approach
+
+## Learning Approach
 This project is being developed as a progressive Cloud and DevOps learning project.
+
 Each stage is designed around a practical engineering problem:
+
+```text
 Application
      |
      v
@@ -305,5 +350,6 @@ Kubernetes
      |
      v
 Monitoring & Observability
+```
 
 The objective is not simply to demonstrate individual tools, but to understand how they work together to create a repeatable and maintainable cloud-native deployment platform.
