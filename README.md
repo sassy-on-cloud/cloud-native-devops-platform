@@ -353,3 +353,33 @@ Monitoring & Observability
 ```
 
 The objective is not simply to demonstrate individual tools, but to understand how they work together to create a repeatable and maintainable cloud-native deployment platform.
+
+
+## Security Hardening
+
+Implemented and verified application-level HTTP security headers:
+
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` restricts camera, microphone, and geolocation access
+- `Content-Security-Policy` restricts resource loading and form submission
+- `X-Frame-Options: SAMEORIGIN`
+
+### Verification
+
+- Application builds successfully.
+- Automated tests: 2 passed, 0 failed.
+- Public application returned HTTP 200 OK.
+- Security headers verified through the AWS Application Load Balancer.
+- Existing health endpoint and ECS deployment pipeline retained.
+
+### Security Notes
+
+The application currently uses HTTP through the public load balancer.
+HTTPS with a valid TLS certificate remains a separate implementation task.
+Security headers complement, but do not replace, transport encryption,
+input validation, authorization, and infrastructure security controls.
+
+### Evidence
+
+- `screenshots/24-public-security-headers.png`
