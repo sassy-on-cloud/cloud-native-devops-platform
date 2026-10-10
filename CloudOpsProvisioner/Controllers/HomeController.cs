@@ -18,12 +18,25 @@ public class HomeController : Controller
     {
         ViewBag.Requests = _store.GetAll();
 
-        return View(new ProvisioningRequest());
+        return View(new ProvisioningRequest
+        {
+            Environment = "Development",
+            AwsRegion = "ap-south-1",
+            DeploymentPlatform = "ECS Fargate"
+        });
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult Provision(ProvisioningRequest request)
     {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.Requests = _store.GetAll();
+
+            return View("Index", request);
+        }
+
         request.RequestedAt = DateTime.UtcNow;
 
         _store.Add(request);
