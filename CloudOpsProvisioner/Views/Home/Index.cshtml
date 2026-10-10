@@ -1,3 +1,4 @@
+@model CloudOpsProvisioner.Models.ProvisioningRequest
 @{
     ViewData["Title"] = "CloudOps Provisioner";
 }
@@ -55,25 +56,30 @@
                 </p>
 
                 <form asp-controller="Home" asp-action="Provision" method="post">
-                    <label for="environment">Environment</label>
-                    <select id="environment" name="Environment">
-                        <option>Development</option>
-                        <option>Staging</option>
-                        <option>Production</option>
-                    </select>
+                    <div asp-validation-summary="All" class="validation-message"></div>
 
-                    <label for="region">AWS Region</label>
-                    <select id="region" name="AwsRegion">
-                        <option>ap-south-1</option>
-                        <option>us-east-1</option>
-                        <option>eu-west-1</option>
+                    <label asp-for="Environment">Environment</label>
+                    <select asp-for="Environment" id="environment">
+                        <option value="Development">Development</option>
+                        <option value="Staging">Staging</option>
+                        <option value="Production">Production</option>
                     </select>
+                    <span asp-validation-for="Environment" class="validation-message"></span>
 
-                    <label for="deployment">Deployment Platform</label>
-                    <select id="deployment" name="DeploymentPlatform">
-                        <option>ECS Fargate</option>
-                        <option>Amazon EKS</option>
+                    <label asp-for="AwsRegion">AWS Region</label>
+                    <select asp-for="AwsRegion" id="region">
+                        <option value="ap-south-1">ap-south-1</option>
+                        <option value="us-east-1">us-east-1</option>
+                        <option value="eu-west-1">eu-west-1</option>
                     </select>
+                    <span asp-validation-for="AwsRegion" class="validation-message"></span>
+
+                    <label asp-for="DeploymentPlatform">Deployment Platform</label>
+                    <select asp-for="DeploymentPlatform" id="deployment">
+                        <option value="ECS Fargate">ECS Fargate</option>
+                        <option value="Amazon EKS">Amazon EKS</option>
+                    </select>
+                    <span asp-validation-for="DeploymentPlatform" class="validation-message"></span>
 
                     <button type="submit">
                         Request Provisioning
