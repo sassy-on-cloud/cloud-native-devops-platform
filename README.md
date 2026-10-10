@@ -66,7 +66,7 @@ Current Functionality
 - Request history
 - Platform status information
 - In-memory request storage
-- Automated unit tests
+- Automated model-validation and HTTP integration tests
 
 ## Application Stack
 - ASP.NET Core MVC
@@ -225,7 +225,8 @@ Security is being incorporated throughout the project rather than added only at 
 Future security improvements will include AWS WAF and additional application-level security controls.
 
 ## Evidence
-Project screenshots are stored in the screenshots directory.
+
+Project screenshots document application behavior, AWS infrastructure, CI/CD deployments, validation tests, and security verification.
 
 ## Application and Docker
 - [Application running](./screenshots/02-application-running.png)
@@ -382,4 +383,40 @@ input validation, authorization, and infrastructure security controls.
 
 ### Evidence
 
-- `screenshots/24-public-security-headers.png`
+Project evidence includes application behavior, AWS infrastructure, CI/CD deployments, validation tests, and security verification.
+
+- `screenshots/24-public-security-headers.png`\n\n## Input Validation and Application Security
+
+Server-side validation is implemented for provisioning requests. The application
+accepts only the configured environments, AWS regions, and deployment platforms.
+
+### Validation Controls
+
+- Required-field validation for provisioning request inputs
+- Allowlist-based validation for environment, AWS region, and deployment platform
+- Invalid submissions return the form with validation feedback
+- Anti-forgery token validation on provisioning form submissions
+
+### HTTP Security Controls
+
+The application configures and tests these response headers:
+
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- Content Security Policy (CSP)
+- `X-Frame-Options: SAMEORIGIN`
+
+A `/health` endpoint is available for application health verification.
+
+### Automated Test Results
+
+The test suite contains 14 passing tests covering model validation and HTTP
+integration behavior, including the home page, health endpoint, security headers,
+anti-forgery protection, and invalid form submissions.
+
+### Day 6 Evidence
+
+- [Provisioning validation and automated tests](./screenshots/25-validation-tests.png)
+- [GitHub Actions deployment success](./screenshots/26-github-actions-success.png)
+- [HTTP security headers verified](./screenshots/27-security-headers.png)
