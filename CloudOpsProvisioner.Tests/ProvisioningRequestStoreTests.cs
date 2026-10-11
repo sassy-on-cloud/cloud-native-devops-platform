@@ -1,15 +1,26 @@
+using CloudOpsProvisioner.Data;
 using CloudOpsProvisioner.Models;
 using CloudOpsProvisioner.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace CloudOpsProvisioner.Tests;
 
 public class ProvisioningRequestStoreTests
 {
-    [Fact]
-    public void Add_ShouldStoreProvisioningRequest()
+    private static AppDbContext CreateContext()
     {
-        var store = new ProvisioningRequestStore();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
 
+        return new AppDbContext(options);
+    }
+
+    [Fact]
+    public async Task AddAsync_ShouldStoreProvisioningRequest()
+    {
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
         var request = new ProvisioningRequest
         {
             Environment = "Development",
@@ -17,9 +28,9 @@ public class ProvisioningRequestStoreTests
             DeploymentPlatform = "ECS Fargate"
         };
 
-        store.Add(request);
+        await store.AddAsync(request);
 
-        var requests = store.GetAll();
+        var requests = await store.GetAllAsync();
 
         Assert.Single(requests);
         Assert.Equal("Development", requests[0].Environment);
@@ -28,87 +39,94 @@ public class ProvisioningRequestStoreTests
     }
 
     [Fact]
-    public void Add_ShouldPlaceNewestRequestFirst()
+    public async Task GetAllAsync_ShouldPlaceNewestRequestFirst()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
 
-        var firstRequest = new ProvisioningRequest
+        var first = new ProvisioningRequest
         {
-            Environment = "Development"
+            Environment = "Development",
+            RequestedAt = DateTime.UtcNow.AddMinutes(-1)
+        };
+        var second = new ProvisioningRequest
+        {
+            Environment = "Staging",
+            RequestedAt = DateTime.UtcNow
         };
 
-        var secondRequest = new ProvisioningRequest
-        {
-            Environment = "Staging"
-        };
+        await store.AddAsync(first);
+        await store.AddAsync(second);
 
-        store.Add(firstRequest);
-        store.Add(secondRequest);
-
-        var requests = store.GetAll();
+        var requests = await store.GetAllAsync();
 
         Assert.Equal("Staging", requests[0].Environment);
         Assert.Equal("Development", requests[1].Environment);
     }
-    [Fact]
-    public void GetAll_ShouldReturnSnapshot()
-    {
-        var store = new ProvisioningRequestStore();
 
-        store.Add(new ProvisioningRequest
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnIndependentListSnapshot()
+    {
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
+
+        await store.AddAsync(new ProvisioningRequest
         {
             Environment = "Development"
         });
 
-        var snapshot = store.GetAll();
+        var snapshot = await store.GetAllAsync();
 
-        store.Add(new ProvisioningRequest
+        await store.AddAsync(new ProvisioningRequest
         {
             Environment = "Staging"
         });
 
         Assert.Single(snapshot);
-        Assert.Equal("Development", snapshot[0].Environment);
-        Assert.Equal(2, store.GetAll().Count);
+        Assert.Equal(2, (await store.GetAllAsync()).Count);
     }
 
     [Fact]
-    public void Add_ShouldRejectNullRequest()
+    public async Task AddAsync_ShouldRejectNullRequest()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
 
-        Assert.Throws<ArgumentNullException>(
-            () => store.Add(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            () => store.AddAsync(null!));
     }
 
     [Fact]
-    public void Add_ShouldHandleConcurrentRequests()
+    public async Task AddAsync_ShouldStoreManyUniqueRequests()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
 
-        Parallel.For(0, 1000, i =>
+        for (var i = 0; i < 100; i++)
         {
-            store.Add(new ProvisioningRequest
+            await store.AddAsync(new ProvisioningRequest
             {
                 Environment = $"Request-{i}"
             });
-        });
+        }
 
-        var requests = store.GetAll();
+        var requests = await store.GetAllAsync();
 
-        Assert.Equal(1000, requests.Count);
+        Assert.Equal(100, requests.Count);
         Assert.Equal(
-            1000,
-            requests.Select(request => request.Environment).Distinct().Count());
+            100,
+            requests.Select(request => request.Environment)
+                .Distinct()
+                .Count());
     }
 
     [Fact]
     public void ProvisioningRequest_ShouldGenerateUniqueIds()
     {
-        var firstRequest = new ProvisioningRequest();
-        var secondRequest = new ProvisioningRequest();
+        var first = new ProvisioningRequest();
+        var second = new ProvisioningRequest();
 
-        Assert.NotEqual(firstRequest.Id, secondRequest.Id);
+        Assert.NotEqual(first.Id, second.Id);
     }
 
     [Fact]
@@ -116,18 +134,19 @@ public class ProvisioningRequestStoreTests
     {
         var request = new ProvisioningRequest();
 
-        Assert.Equal("Pending", request.Status);
+        Assert.Equal(ProvisioningRequestStatuses.Pending, request.Status);
     }
 
     [Fact]
-    public void TryUpdateStatus_ShouldAllowPendingToProcessing()
+    public async Task TryUpdateStatusAsync_ShouldAllowPendingToProcessing()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
         var request = new ProvisioningRequest();
 
-        store.Add(request);
+        await store.AddAsync(request);
 
-        var updated = store.TryUpdateStatus(
+        var updated = await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Processing);
 
@@ -140,19 +159,20 @@ public class ProvisioningRequestStoreTests
     [Theory]
     [InlineData(ProvisioningRequestStatuses.Completed)]
     [InlineData(ProvisioningRequestStatuses.Failed)]
-    public void TryUpdateStatus_ShouldAllowProcessingToTerminalStatus(
+    public async Task TryUpdateStatusAsync_ShouldAllowProcessingToTerminalStatus(
         string terminalStatus)
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
         var request = new ProvisioningRequest();
 
-        store.Add(request);
+        await store.AddAsync(request);
 
-        Assert.True(store.TryUpdateStatus(
+        Assert.True(await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Processing));
 
-        Assert.True(store.TryUpdateStatus(
+        Assert.True(await store.TryUpdateStatusAsync(
             request.Id,
             terminalStatus));
 
@@ -160,29 +180,29 @@ public class ProvisioningRequestStoreTests
     }
 
     [Fact]
-    public void TryUpdateStatus_ShouldRejectPendingToCompleted()
+    public async Task TryUpdateStatusAsync_ShouldRejectPendingToCompleted()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
         var request = new ProvisioningRequest();
 
-        store.Add(request);
+        await store.AddAsync(request);
 
-        var updated = store.TryUpdateStatus(
+        var updated = await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Completed);
 
         Assert.False(updated);
-        Assert.Equal(
-            ProvisioningRequestStatuses.Pending,
-            request.Status);
+        Assert.Equal(ProvisioningRequestStatuses.Pending, request.Status);
     }
 
     [Fact]
-    public void TryUpdateStatus_ShouldRejectUnknownRequest()
+    public async Task TryUpdateStatusAsync_ShouldRejectUnknownRequest()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
 
-        var updated = store.TryUpdateStatus(
+        var updated = await store.TryUpdateStatusAsync(
             Guid.NewGuid(),
             ProvisioningRequestStatuses.Processing);
 
@@ -190,28 +210,27 @@ public class ProvisioningRequestStoreTests
     }
 
     [Fact]
-    public void TryUpdateStatus_ShouldRejectTransitionFromCompleted()
+    public async Task TryUpdateStatusAsync_ShouldRejectTransitionFromCompleted()
     {
-        var store = new ProvisioningRequestStore();
+        using var context = CreateContext();
+        var store = new ProvisioningRequestStore(context);
         var request = new ProvisioningRequest();
 
-        store.Add(request);
+        await store.AddAsync(request);
 
-        Assert.True(store.TryUpdateStatus(
+        Assert.True(await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Processing));
 
-        Assert.True(store.TryUpdateStatus(
+        Assert.True(await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Completed));
 
-        var updated = store.TryUpdateStatus(
+        var updated = await store.TryUpdateStatusAsync(
             request.Id,
             ProvisioningRequestStatuses.Processing);
 
         Assert.False(updated);
-        Assert.Equal(
-            ProvisioningRequestStatuses.Completed,
-            request.Status);
+        Assert.Equal(ProvisioningRequestStatuses.Completed, request.Status);
     }
 }

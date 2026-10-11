@@ -1,18 +1,41 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using CloudOpsProvisioner.Data;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CloudOpsProvisioner.Tests;
 
-public class HomeControllerIntegrationTests
-    : IClassFixture<WebApplicationFactory<Program>>
+public class HomeControllerIntegrationTests : IDisposable
 {
+    private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
 
-    public HomeControllerIntegrationTests(
-        WebApplicationFactory<Program> factory)
+    public HomeControllerIntegrationTests()
     {
-        _client = factory.CreateClient();
+        _factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+
+                builder.ConfigureServices(services =>
+                {
+                    services.RemoveAll<AppDbContext>();
+                    services.RemoveAll<DbContextOptions<AppDbContext>>();
+                    services.RemoveAll<
+                        IDbContextOptionsConfiguration<AppDbContext>>();
+
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseInMemoryDatabase(
+                            Guid.NewGuid().ToString()));
+                });
+            });
+
+        _client = _factory.CreateClient();
     }
 
     [Fact]
@@ -71,7 +94,6 @@ public class HomeControllerIntegrationTests
     [Fact]
     public async Task ProvisionPost_WithInvalidValues_ShowsValidationErrors()
     {
-        // GET the form first so the client receives the anti-forgery cookie.
         var pageResponse = await _client.GetAsync("/");
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
 
@@ -114,5 +136,11 @@ public class HomeControllerIntegrationTests
             responseHtml);
         Assert.Contains("Choose ECS Fargate or Amazon EKS.",
             responseHtml);
+    }
+
+    public void Dispose()
+    {
+        _client.Dispose();
+        _factory.Dispose();
     }
 }

@@ -1,9 +1,31 @@
+using CloudOpsProvisioner.Data;
 using CloudOpsProvisioner.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString) &&
+    !builder.Environment.IsEnvironment("Testing"))
+{
+    throw new InvalidOperationException(
+        "Database connection is missing. Configure " +
+        "ConnectionStrings__DefaultConnection.");
+}
+
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<ProvisioningRequestStore>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    if (!string.IsNullOrWhiteSpace(connectionString))
+    {
+        options.UseNpgsql(connectionString);
+    }
+});
+
+builder.Services.AddScoped<ProvisioningRequestStore>();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();

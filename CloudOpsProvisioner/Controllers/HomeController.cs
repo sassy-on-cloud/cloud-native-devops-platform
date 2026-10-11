@@ -14,9 +14,10 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index(
+        CancellationToken cancellationToken)
     {
-        ViewBag.Requests = _store.GetAll();
+        ViewBag.Requests = await _store.GetAllAsync(cancellationToken);
 
         return View(new ProvisioningRequest
         {
@@ -28,18 +29,20 @@ public class HomeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Provision(ProvisioningRequest request)
+    public async Task<IActionResult> Provision(
+        ProvisioningRequest request,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.Requests = _store.GetAll();
+            ViewBag.Requests = await _store.GetAllAsync(cancellationToken);
 
             return View("Index", request);
         }
 
         request.RequestedAt = DateTime.UtcNow;
 
-        _store.Add(request);
+        await _store.AddAsync(request, cancellationToken);
 
         TempData["SuccessMessage"] =
             $"Provisioning request received for {request.Environment} using {request.DeploymentPlatform} in {request.AwsRegion}.";
