@@ -4,6 +4,8 @@ namespace CloudOpsProvisioner.Models;
 
 public class ProvisioningRequest
 {
+    public Guid Id { get; set; } = Guid.NewGuid();
+
     [Required(ErrorMessage = "Please select an environment.")]
     [RegularExpression(
         "^(Development|Staging|Production)$",
@@ -23,4 +25,6 @@ public class ProvisioningRequest
     public string DeploymentPlatform { get; set; } = string.Empty;
 
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+
+    public string Status { get; set; } = "Pending";
 }

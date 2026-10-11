@@ -101,4 +101,21 @@ public class ProvisioningRequestStoreTests
             1000,
             requests.Select(request => request.Environment).Distinct().Count());
     }
+
+    [Fact]
+    public void ProvisioningRequest_ShouldGenerateUniqueIds()
+    {
+        var firstRequest = new ProvisioningRequest();
+        var secondRequest = new ProvisioningRequest();
+
+        Assert.NotEqual(firstRequest.Id, secondRequest.Id);
+    }
+
+    [Fact]
+    public void ProvisioningRequest_ShouldStartWithPendingStatus()
+    {
+        var request = new ProvisioningRequest();
+
+        Assert.Equal("Pending", request.Status);
+    }
 }
