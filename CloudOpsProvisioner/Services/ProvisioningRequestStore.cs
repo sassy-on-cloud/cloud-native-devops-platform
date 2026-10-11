@@ -26,4 +26,40 @@ public class ProvisioningRequestStore
             _requests.Insert(0, request);
         }
     }
+
+    public bool TryUpdateStatus(Guid requestId, string newStatus)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(newStatus);
+
+        lock (_lock)
+        {
+            var request = _requests.FirstOrDefault(
+                item => item.Id == requestId);
+
+            if (request is null)
+            {
+                return false;
+            }
+
+            var allowed = request.Status switch
+            {
+                ProvisioningRequestStatuses.Pending =>
+                    newStatus == ProvisioningRequestStatuses.Processing,
+
+                ProvisioningRequestStatuses.Processing =>
+                    newStatus == ProvisioningRequestStatuses.Completed ||
+                    newStatus == ProvisioningRequestStatuses.Failed,
+
+                _ => false
+            };
+
+            if (!allowed)
+            {
+                return false;
+            }
+
+            request.Status = newStatus;
+            return true;
+        }
+    }
 }

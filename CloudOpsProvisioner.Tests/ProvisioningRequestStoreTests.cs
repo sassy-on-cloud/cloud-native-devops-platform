@@ -118,4 +118,100 @@ public class ProvisioningRequestStoreTests
 
         Assert.Equal("Pending", request.Status);
     }
+
+    [Fact]
+    public void TryUpdateStatus_ShouldAllowPendingToProcessing()
+    {
+        var store = new ProvisioningRequestStore();
+        var request = new ProvisioningRequest();
+
+        store.Add(request);
+
+        var updated = store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Processing);
+
+        Assert.True(updated);
+        Assert.Equal(
+            ProvisioningRequestStatuses.Processing,
+            request.Status);
+    }
+
+    [Theory]
+    [InlineData(ProvisioningRequestStatuses.Completed)]
+    [InlineData(ProvisioningRequestStatuses.Failed)]
+    public void TryUpdateStatus_ShouldAllowProcessingToTerminalStatus(
+        string terminalStatus)
+    {
+        var store = new ProvisioningRequestStore();
+        var request = new ProvisioningRequest();
+
+        store.Add(request);
+
+        Assert.True(store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Processing));
+
+        Assert.True(store.TryUpdateStatus(
+            request.Id,
+            terminalStatus));
+
+        Assert.Equal(terminalStatus, request.Status);
+    }
+
+    [Fact]
+    public void TryUpdateStatus_ShouldRejectPendingToCompleted()
+    {
+        var store = new ProvisioningRequestStore();
+        var request = new ProvisioningRequest();
+
+        store.Add(request);
+
+        var updated = store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Completed);
+
+        Assert.False(updated);
+        Assert.Equal(
+            ProvisioningRequestStatuses.Pending,
+            request.Status);
+    }
+
+    [Fact]
+    public void TryUpdateStatus_ShouldRejectUnknownRequest()
+    {
+        var store = new ProvisioningRequestStore();
+
+        var updated = store.TryUpdateStatus(
+            Guid.NewGuid(),
+            ProvisioningRequestStatuses.Processing);
+
+        Assert.False(updated);
+    }
+
+    [Fact]
+    public void TryUpdateStatus_ShouldRejectTransitionFromCompleted()
+    {
+        var store = new ProvisioningRequestStore();
+        var request = new ProvisioningRequest();
+
+        store.Add(request);
+
+        Assert.True(store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Processing));
+
+        Assert.True(store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Completed));
+
+        var updated = store.TryUpdateStatus(
+            request.Id,
+            ProvisioningRequestStatuses.Processing);
+
+        Assert.False(updated);
+        Assert.Equal(
+            ProvisioningRequestStatuses.Completed,
+            request.Status);
+    }
 }

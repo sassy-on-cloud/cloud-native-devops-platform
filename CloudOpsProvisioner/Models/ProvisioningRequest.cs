@@ -26,5 +26,5 @@ public class ProvisioningRequest
 
     public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
 
-    public string Status { get; set; } = "Pending";
+    public string Status { get; internal set; } = "Pending";
 }
