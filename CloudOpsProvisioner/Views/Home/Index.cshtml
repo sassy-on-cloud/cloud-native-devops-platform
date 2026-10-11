@@ -92,7 +92,7 @@
 
                 <div class="metric">
                     <span>Infrastructure</span>
-                    <strong>Ready</strong>
+                    <strong>Request Only</strong>
                 </div>
 
                 <div class="metric">
@@ -136,20 +136,29 @@
     {
         <div class="requests-table">
 
+            
             <div class="request-row request-header">
+                <span>Request ID</span>
                 <span>Environment</span>
                 <span>AWS Region</span>
                 <span>Platform</span>
+                <span>Submitted (UTC)</span>
                 <span>Status</span>
             </div>
 
             @foreach (var request in ViewBag.Requests)
             {
                 <div class="request-row">
+                    <span title="@request.Id">
+                        @(request.Id.ToString("N").Substring(0, 8))
+                    </span>
                     <span>@request.Environment</span>
                     <span>@request.AwsRegion</span>
                     <span>@request.DeploymentPlatform</span>
-                    <span class="status-badge">Requested</span>
+                    <span>
+                        @request.RequestedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                    </span>
+                    <span class="status-badge">@request.Status</span>
                 </div>
             }
 

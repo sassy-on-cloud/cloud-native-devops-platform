@@ -203,17 +203,19 @@ button:hover {
     margin-top: 5px;
 }
 
+
 .requests-table {
     background: #ffffff;
     border: 1px solid #e2e7ed;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .request-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1.2fr 0.8fr;
-    gap: 20px;
+    grid-template-columns: 0.9fr 1fr 0.9fr 1fr 1.5fr 0.8fr;
+    gap: 16px;
+    min-width: 1050px;
     padding: 17px 22px;
     border-bottom: 1px solid #edf0f3;
     align-items: center;
@@ -229,6 +231,7 @@ button:hover {
     font-weight: 700;
     color: #657184;
 }
+
 
 .status-badge {
     display: inline-block;
@@ -251,12 +254,11 @@ button:hover {
 
 @media (max-width: 800px) {
     .request-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        min-width: 1050px;
     }
 
     .request-header {
-        display: none;
+        display: grid;
     }
 }
 
