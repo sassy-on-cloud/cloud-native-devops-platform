@@ -50,4 +50,55 @@ public class ProvisioningRequestStoreTests
         Assert.Equal("Staging", requests[0].Environment);
         Assert.Equal("Development", requests[1].Environment);
     }
+    [Fact]
+    public void GetAll_ShouldReturnSnapshot()
+    {
+        var store = new ProvisioningRequestStore();
+
+        store.Add(new ProvisioningRequest
+        {
+            Environment = "Development"
+        });
+
+        var snapshot = store.GetAll();
+
+        store.Add(new ProvisioningRequest
+        {
+            Environment = "Staging"
+        });
+
+        Assert.Single(snapshot);
+        Assert.Equal("Development", snapshot[0].Environment);
+        Assert.Equal(2, store.GetAll().Count);
+    }
+
+    [Fact]
+    public void Add_ShouldRejectNullRequest()
+    {
+        var store = new ProvisioningRequestStore();
+
+        Assert.Throws<ArgumentNullException>(
+            () => store.Add(null!));
+    }
+
+    [Fact]
+    public void Add_ShouldHandleConcurrentRequests()
+    {
+        var store = new ProvisioningRequestStore();
+
+        Parallel.For(0, 1000, i =>
+        {
+            store.Add(new ProvisioningRequest
+            {
+                Environment = $"Request-{i}"
+            });
+        });
+
+        var requests = store.GetAll();
+
+        Assert.Equal(1000, requests.Count);
+        Assert.Equal(
+            1000,
+            requests.Select(request => request.Environment).Distinct().Count());
+    }
 }
