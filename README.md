@@ -65,7 +65,11 @@ Current Functionality
 - Deployment platform selection
 - Request history
 - Platform status information
-- In-memory request storage
+- PostgreSQL-backed persistent request storage
+- Entity Framework Core database migrations
+- Server-side input validation and anti-forgery protection
+- Provisioning request status tracking
+- Automated unit and HTTP integration tests
 - Automated model-validation and HTTP integration tests
 
 ## Application Stack
@@ -420,3 +424,101 @@ anti-forgery protection, and invalid form submissions.
 - [Provisioning validation and automated tests](./screenshots/25-validation-tests.png)
 - [GitHub Actions deployment success](./screenshots/26-github-actions-success.png)
 - [HTTP security headers verified](./screenshots/27-security-headers.png)
+
+### PostgreSQL and Data Persistence
+
+## PostgreSQL and Data Persistence
+
+The application uses PostgreSQL to persist provisioning requests across application and database container restarts. Entity Framework Core manages database access and schema migrations.
+
+### Database Features
+
+- PostgreSQL 17 running locally through Docker Compose
+- Persistent Docker volume for database storage
+- Entity Framework Core migrations for schema management
+- Provisioning request records stored with identifiers, environment, AWS region, deployment platform, status, and timestamp
+- Server-side validation to prevent invalid requests from being persisted
+- Database-backed request history displayed in the application dashboard
+
+### Local Development Setup
+
+**Prerequisites**
+
+- Docker Engine and Docker Compose
+- .NET 10 SDK
+- Entity Framework Core CLI for database migrations
+
+**1. Configure environment variables**
+
+Create a local environment file from the example:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set a strong local PostgreSQL password. The `.env` file is ignored by Git and must not be committed.
+
+**2. Start PostgreSQL**
+
+```bash
+docker compose up -d postgres
+docker compose ps
+```
+
+Wait until the PostgreSQL container reports a healthy status.
+
+**3. Configure the application connection**
+
+Load the local environment variables and configure the connection string:
+
+```bash
+set -a
+source .env
+set +a
+
+export ConnectionStrings__DefaultConnection="Host=127.0.0.1;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+```
+
+**4. Apply database migrations**
+
+```bash
+dotnet ef database update \
+  --project CloudOpsProvisioner \
+  --startup-project CloudOpsProvisioner
+```
+
+**5. Run the application**
+
+```bash
+dotnet run --project CloudOpsProvisioner \
+  --urls http://127.0.0.1:5299
+```
+
+Open `http://localhost:5299` in your browser.
+
+**6. Run automated tests**
+
+In a separate terminal:
+
+```bash
+dotnet test CloudOpsProvisioner.Tests/CloudOpsProvisioner.Tests.csproj
+```
+
+The automated test suite uses an isolated in-memory database for its database-related tests, so PostgreSQL does not need to be running to execute the test suite.
+
+### Verified Persistence
+
+The following behaviors have been verified locally:
+
+- PostgreSQL starts and passes its container health check.
+- The database schema and EF Core migration history are present.
+- Provisioning requests are stored in PostgreSQL.
+- Saved requests survive a PostgreSQL container restart.
+- The application dashboard displays persisted requests.
+- Invalid provisioning submissions are rejected and are not saved.
+
+### Current Scope and Next Steps
+
+The application currently records and tracks provisioning requests; it does not yet execute Terraform plans or provision AWS infrastructure in response to a submitted request.
+
+The local PostgreSQL setup is for development and testing. Production database configuration, secure secret management, and database-aware health checks remain separate deployment tasks.
