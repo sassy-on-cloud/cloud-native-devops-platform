@@ -136,6 +136,13 @@ public class HomeControllerIntegrationTests : IDisposable
             responseHtml);
         Assert.Contains("Choose ECS Fargate or Amazon EKS.",
             responseHtml);
+	using (var scope = _factory.Services.CreateScope())
+	{
+    	var dbContext = scope.ServiceProvider
+        	.GetRequiredService<CloudOpsProvisioner.Data.AppDbContext>();
+
+    	Assert.Empty(dbContext.ProvisioningRequests);
+	}    
     }
 
     public void Dispose()
