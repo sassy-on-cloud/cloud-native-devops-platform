@@ -411,21 +411,36 @@ The application configures and tests these response headers:
 - Content Security Policy (CSP)
 - `X-Frame-Options: SAMEORIGIN`
 
-A `/health` endpoint is available for application health verification.
+### Health Check Endpoints
+
+The application exposes three health-check endpoints:
+
+| Endpoint | Purpose | Healthy response |
+|---|---|---|
+| `/health/live` | Confirms the application process responds without checking PostgreSQL. | HTTP 200 |
+| `/health/ready` | Checks application readiness, including PostgreSQL connectivity. | HTTP 200 |
+| `/health` | Backward-compatible database-aware health check. | HTTP 200 |
+
+The readiness and backward-compatible endpoints return HTTP 503 when the
+database health check fails. Liveness remains independent of database
+availability. Responses use JSON and include the configured HTTP security
+headers.
+
+These behaviors have been verified locally. Production database configuration
+is not yet complete, so the database-dependent release has not been deployed
+to ECS.
 
 ### Automated Test Results
 
-The test suite contains 14 passing tests covering model validation and HTTP
-integration behavior, including the home page, health endpoint, security headers,
-anti-forgery protection, and invalid form submissions.
+The latest full test run passed 27 tests, covering model validation and HTTP
+integration behavior, including the home page, health endpoints, security headers,
+anti-forgery protection, invalid form submissions, and database failure handling.
 
 ### Day 6 Evidence
 
 - [Provisioning validation and automated tests](./screenshots/25-validation-tests.png)
 - [GitHub Actions deployment success](./screenshots/26-github-actions-success.png)
 - [HTTP security headers verified](./screenshots/27-security-headers.png)
-
-### PostgreSQL and Data Persistence
 
 ## PostgreSQL and Data Persistence
 
