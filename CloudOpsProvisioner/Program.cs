@@ -1,6 +1,7 @@
 using CloudOpsProvisioner.Data;
 using CloudOpsProvisioner.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +27,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<ProvisioningRequestStore>();
-builder.Services.AddHealthChecks();
+
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>(
+        name: "postgresql",
+        tags: new[] { "db", "ready" });
 
 var app = builder.Build();
 
@@ -60,7 +66,26 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+
+        var response = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(entry => new
+            {
+                name = entry.Key,
+                status = entry.Value.Status.ToString()
+            })
+        };
+
+        await context.Response.WriteAsync(
+            JsonSerializer.Serialize(response));
+    }
+});
 
 app.MapControllerRoute(
     name: "default",

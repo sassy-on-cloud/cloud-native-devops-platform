@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Text.RegularExpressions;
 using CloudOpsProvisioner.Data;
@@ -74,6 +76,67 @@ public class HomeControllerIntegrationTests : IDisposable
         var response = await _client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("application/json",
+            response.Content.Headers.ContentType?.MediaType);
+
+        using var document = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync());
+
+        var root = document.RootElement;
+
+        Assert.Equal("Healthy", root.GetProperty("status").GetString());
+
+        var databaseCheck = root.GetProperty("checks")
+            .EnumerateArray()
+            .Single(check =>
+                check.GetProperty("name").GetString() == "postgresql");
+
+        Assert.Equal("Healthy",
+            databaseCheck.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task HealthEndpoint_ReturnsUnhealthy_WhenDatabaseIsUnavailable()
+    {
+        using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                {
+                    configuration.AddInMemoryCollection(
+                        new Dictionary<string, string?>
+                        {
+                            ["ConnectionStrings:DefaultConnection"] =
+                                "Host=127.0.0.1;Port=1;" +
+                                "Database=cloudops_test;" +
+                                "Username=test;Password=test;" +
+                                "Timeout=1;Command Timeout=1;Pooling=false"
+                        });
+                });
+            });
+
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/health");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+
+        using var document = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync());
+
+        var root = document.RootElement;
+
+        Assert.Equal("Unhealthy", root.GetProperty("status").GetString());
+
+        var databaseCheck = root.GetProperty("checks")
+            .EnumerateArray()
+            .Single(check =>
+                check.GetProperty("name").GetString() == "postgresql");
+
+        Assert.Equal("Unhealthy",
+            databaseCheck.GetProperty("status").GetString());
     }
 
     [Fact]
@@ -136,13 +199,13 @@ public class HomeControllerIntegrationTests : IDisposable
             responseHtml);
         Assert.Contains("Choose ECS Fargate or Amazon EKS.",
             responseHtml);
-	using (var scope = _factory.Services.CreateScope())
-	{
-    	var dbContext = scope.ServiceProvider
-        	.GetRequiredService<CloudOpsProvisioner.Data.AppDbContext>();
+    using (var scope = _factory.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<CloudOpsProvisioner.Data.AppDbContext>();
 
-    	Assert.Empty(dbContext.ProvisioningRequests);
-	}    
+        Assert.Empty(dbContext.ProvisioningRequests);
+    }    
     }
 
     public void Dispose()
