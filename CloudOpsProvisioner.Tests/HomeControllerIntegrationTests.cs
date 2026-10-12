@@ -95,7 +95,7 @@ public class HomeControllerIntegrationTests : IDisposable
             databaseCheck.GetProperty("status").GetString());
     }
 
-    [Fact]
+        [Fact]
     public async Task HealthEndpoint_ReturnsUnhealthy_WhenDatabaseIsUnavailable()
     {
         using var factory = new WebApplicationFactory<Program>()
@@ -115,13 +115,30 @@ public class HomeControllerIntegrationTests : IDisposable
                                 "Timeout=1;Command Timeout=1;Pooling=false"
                         });
                 });
+
+                builder.ConfigureServices(services =>
+                {
+                    services.RemoveAll<AppDbContext>();
+                    services.RemoveAll<DbContextOptions<AppDbContext>>();
+                    services.RemoveAll<
+                        IDbContextOptionsConfiguration<AppDbContext>>();
+
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseNpgsql(
+                            "Host=127.0.0.1;Port=1;" +
+                            "Database=cloudops_test;" +
+                            "Username=test;Password=test;" +
+                            "Timeout=1;Command Timeout=1;Pooling=false"));
+                });
             });
 
         using var client = factory.CreateClient();
 
         var response = await client.GetAsync("/health");
 
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(
+            HttpStatusCode.ServiceUnavailable,
+            response.StatusCode);
 
         using var document = JsonDocument.Parse(
             await response.Content.ReadAsStringAsync());
@@ -137,6 +154,60 @@ public class HomeControllerIntegrationTests : IDisposable
 
         Assert.Equal("Unhealthy",
             databaseCheck.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task LivenessEndpoint_ReturnsSuccess_WhenDatabaseIsUnavailable()
+    {
+        using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                {
+                    configuration.AddInMemoryCollection(
+                        new Dictionary<string, string?>
+                        {
+                            ["ConnectionStrings:DefaultConnection"] =
+                                "Host=127.0.0.1;Port=1;" +
+                                "Database=cloudops_test;" +
+                                "Username=test;Password=test;" +
+                                "Timeout=1;Command Timeout=1;Pooling=false"
+                        });
+                });
+
+                builder.ConfigureServices(services =>
+                {
+                    services.RemoveAll<AppDbContext>();
+                    services.RemoveAll<DbContextOptions<AppDbContext>>();
+                    services.RemoveAll<
+                        IDbContextOptionsConfiguration<AppDbContext>>();
+
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseNpgsql(
+                            "Host=127.0.0.1;Port=1;" +
+                            "Database=cloudops_test;" +
+                            "Username=test;Password=test;" +
+                            "Timeout=1;Command Timeout=1;Pooling=false"));
+                });
+            });
+
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/health/live");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var document = JsonDocument.Parse(
+            await response.Content.ReadAsStringAsync());
+
+        Assert.Equal(
+            "Healthy",
+            document.RootElement.GetProperty("status").GetString());
+
+        Assert.Empty(
+            document.RootElement.GetProperty("checks").EnumerateArray());
     }
 
     [Fact]

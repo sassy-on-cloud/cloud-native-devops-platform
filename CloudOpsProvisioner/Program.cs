@@ -66,26 +66,40 @@ if (!app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    ResponseWriter = async (context, report) =>
+var healthCheckOptions =
+    new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
     {
-        context.Response.ContentType = "application/json";
-
-        var response = new
+        ResponseWriter = async (context, report) =>
         {
-            status = report.Status.ToString(),
-            checks = report.Entries.Select(entry => new
-            {
-                name = entry.Key,
-                status = entry.Value.Status.ToString()
-            })
-        };
+            context.Response.ContentType = "application/json";
 
-        await context.Response.WriteAsync(
-            JsonSerializer.Serialize(response));
-    }
+            var response = new
+            {
+                status = report.Status.ToString(),
+                checks = report.Entries.Select(entry => new
+                {
+                    name = entry.Key,
+                    status = entry.Value.Status.ToString()
+                })
+            };
+
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(response));
+        }
+    };
+
+// Liveness: confirms the application process is responding.
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false,
+    ResponseWriter = healthCheckOptions.ResponseWriter
 });
+
+// Readiness: confirms the application and PostgreSQL are healthy.
+app.MapHealthChecks("/health/ready", healthCheckOptions);
+
+// Backward compatibility with the existing health endpoint.
+app.MapHealthChecks("/health", healthCheckOptions);
 
 app.MapControllerRoute(
     name: "default",
