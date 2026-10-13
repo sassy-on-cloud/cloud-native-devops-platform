@@ -327,6 +327,8 @@ The application is currently deployed to AWS ECS Fargate behind an Application L
 
 The next stages will extend the platform with stronger security, environment-aware deployments, Kubernetes, and monitoring to create a more complete cloud-native DevOps platform.
 
+**Deployment note:** PostgreSQL-backed request persistence has been verified locally. Production database configuration remains deferred, so database-dependent changes must not be deployed to ECS until that configuration is ready.
+
 ## Learning Approach
 This project is being developed as a progressive Cloud and DevOps learning project.
 
