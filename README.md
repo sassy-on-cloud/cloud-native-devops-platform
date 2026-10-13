@@ -375,7 +375,7 @@ Implemented and verified application-level HTTP security headers:
 ### Verification
 
 - Application builds successfully.
-- Automated tests: 2 passed, 0 failed.
+- Automated tests: 27 passed, 0 failed (latest full test run).
 - Public application returned HTTP 200 OK.
 - Security headers verified through the AWS Application Load Balancer.
 - Existing health endpoint and ECS deployment pipeline retained.
