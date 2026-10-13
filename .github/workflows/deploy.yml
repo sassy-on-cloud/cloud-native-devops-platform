@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'CloudOpsProvisioner/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - 'global.json'
+      - 'NuGet.config'
+      - 'Directory.Build.*'
 
 permissions:
   id-token: write
@@ -24,6 +32,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run automated tests
+        run: dotnet test ./CloudOpsProvisioner.Tests/CloudOpsProvisioner.Tests.csproj --configuration Release
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -1,0 +1,35 @@
+
+name: CI - Build and Test
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore ./CloudOpsProvisioner.Tests/CloudOpsProvisioner.Tests.csproj
+
+      - name: Build application and tests
+        run: dotnet build ./CloudOpsProvisioner.Tests/CloudOpsProvisioner.Tests.csproj --configuration Release --no-restore
+
+      - name: Run automated tests
+        run: dotnet test ./CloudOpsProvisioner.Tests/CloudOpsProvisioner.Tests.csproj --configuration Release --no-build
