@@ -179,6 +179,20 @@ The deployment pipeline performs the following steps:
 11. Waits for ECS service stability.
 12. Verifies that the application is healthy behind the Application Load Balancer.
 
+### Deployment Safety Checklist
+
+Before and after a deployment, verify the following:
+
+- [ ] Automated tests pass before AWS authentication, image publishing, and deployment.
+- [ ] The Docker image is tagged with the intended Git commit SHA.
+- [ ] The ECS task definition references the intended image and has the expected configuration.
+- [ ] The ECS service reaches a stable state with the expected number of running tasks.
+- [ ] The Application Load Balancer target reports healthy, and the public application responds successfully.
+- [ ] Database-dependent changes are not deployed until production database configuration and secrets are ready.
+- [ ] If deployment fails, restore the last known-good task definition revision and verify service and target health.
+
+Record the deployed image tag, task definition revision, test result, and health-check result when reviewing a release.
+
 ## Deployment Verification
 The first automated deployment successfully completed through GitHub Actions.
 
