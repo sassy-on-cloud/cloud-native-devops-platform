@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'CloudOpsProvisioner/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - 'global.json'
+      - 'NuGet.config'
+      - 'Directory.Build.*'
 
 permissions:
   id-token: write
